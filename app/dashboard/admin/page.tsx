@@ -110,6 +110,9 @@ export default function AdminDashboard() {
                   <button onClick={() => handleUploadClick(u.id)} className="underline">
                     Upload Image
                   </button>
+                  <Link href={`/dashboard/admin/users/${u.id}/images`} className="underline">
+                    View Images
+                  </Link>
                 </td>
               </tr>
             ))}

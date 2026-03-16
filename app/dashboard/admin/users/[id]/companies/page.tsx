@@ -13,6 +13,7 @@ interface Company {
   noOfProducts?: number;
   percentage?: number;
   createdById: number;
+  createdAt?: string;
   [key: string]: unknown;
 }
 
@@ -92,7 +93,13 @@ export default function UserCompaniesPage() {
             if (isFirstPage.current && atTop) {
               setCompanies((prev) => {
                 const filtered = prev.filter((c) => c.id !== company.id);
-                return [company, ...filtered].slice(0, 10);
+                const result = [company, ...filtered].slice(0, 10);
+                setNextCursor(
+                  result[result.length - 1]?.createdAt
+                    ? new Date(result[result.length - 1].createdAt!).getTime()
+                    : null,
+                );
+                return result;
               });
             } else {
               setHasNewUpdates(true);

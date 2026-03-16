@@ -74,7 +74,7 @@ export default function WorkerDashboard() {
           min={0}
           value={
             noOfUsers && noOfProducts
-              ? parseFloat(((Number(noOfProducts) / Number(noOfUsers)) * 100).toFixed(2)) + " %"
+              ? parseFloat(((Number(noOfProducts) / Number(noOfUsers)) * 100).toFixed(2)) + "%"
               : ""
           }
           className="w-full border border-gray-300 rounded px-3 py-2 mb-4 text-sm"
