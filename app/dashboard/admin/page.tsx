@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import Link from "next/link";
 
@@ -24,7 +24,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [uploadingId, setUploadingId] = useState<number | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [isSubmittingUpload, setIsSubmittingUpload] = useState(false);
 
   const fetchUsers = async (offset?: number | null) => {
     setLoading(true);
@@ -51,15 +52,23 @@ export default function AdminDashboard() {
 
   const handleUploadClick = (userId: number) => {
     setUploadingId(userId);
-    fileInputRef.current?.click();
+    setSelectedFile(null);
   };
 
-  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || uploadingId == null) return;
+  const closeUploadModal = () => {
+    if (isSubmittingUpload) return;
+    setUploadingId(null);
+    setSelectedFile(null);
+  };
+
+  const handleUploadSubmit = async () => {
+    if (!selectedFile || uploadingId == null) return;
+
+    setIsSubmittingUpload(true);
+
     try {
       const form = new FormData();
-      form.append("file", file);
+      form.append("file", selectedFile);
       await apiFetch(`/users/${uploadingId}/image`, {
         method: "POST",
         body: form,
@@ -68,8 +77,9 @@ export default function AdminDashboard() {
     } catch (err: unknown) {
       alert(err instanceof Error ? err.message : "Upload failed");
     } finally {
+      setIsSubmittingUpload(false);
       setUploadingId(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      setSelectedFile(null);
     }
   };
 
@@ -77,14 +87,6 @@ export default function AdminDashboard() {
     <div>
       <h1 className="text-lg font-semibold mb-4">Workers</h1>
       {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
-
-      <input
-        ref={fileInputRef}
-        type="file"
-        accept="image/*"
-        className="hidden"
-        onChange={handleFileChange}
-      />
 
       {loading ? (
         <p className="text-sm">Loading...</p>
@@ -137,6 +139,49 @@ export default function AdminDashboard() {
           Next
         </button>
       </div>
+
+      {uploadingId != null && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="upload-dialog-title"
+            className="w-full max-w-md rounded-lg bg-white p-6 shadow-xl"
+          >
+            <h2 id="upload-dialog-title" className="text-base font-semibold">
+              Upload image for worker {uploadingId}
+            </h2>
+            <p className="mt-2 text-sm text-gray-600">Select an image, then confirm the upload.</p>
+
+            <label className="mt-4 block text-sm font-medium text-gray-700">Image file</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={(e) => setSelectedFile(e.target.files?.[0] ?? null)}
+              className="mt-2 block w-full text-sm text-gray-700 file:mr-4 file:rounded-md file:border-0 file:bg-black file:px-3 file:py-2 file:text-sm file:font-medium file:text-white"
+            />
+
+            <div className="mt-6 flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={closeUploadModal}
+                disabled={isSubmittingUpload}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleUploadSubmit}
+                disabled={!selectedFile || isSubmittingUpload}
+                className="rounded-md bg-black px-4 py-2 text-sm text-white disabled:opacity-50"
+              >
+                {isSubmittingUpload ? "Uploading..." : "Upload"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
