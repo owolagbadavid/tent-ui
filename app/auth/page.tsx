@@ -6,6 +6,7 @@ import { auth } from "@/lib/firebase";
 import { apiFetch } from "@/lib/api";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { Profile } from "@/lib/auth-context";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -20,7 +21,7 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      const profile = await apiFetch("/users/profile");
+      const profile = await apiFetch<Profile>("/users/profile");
       if (profile.roles[0] === "admin") {
         router.push("/dashboard/admin");
       } else {

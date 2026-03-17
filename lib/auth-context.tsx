@@ -5,7 +5,7 @@ import { onAuthStateChanged, signOut, User } from "firebase/auth";
 import { auth } from "./firebase";
 import { apiFetch } from "./api";
 
-interface Profile {
+export interface Profile {
   id: number;
   uid: string;
   roles: ("worker" | "admin")[];
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setUser(firebaseUser);
       if (firebaseUser) {
         try {
-          const p = await apiFetch("/users/profile");
+          const p = await apiFetch<Profile>("/users/profile");
           setProfile(p);
         } catch {
           setProfile(null);
