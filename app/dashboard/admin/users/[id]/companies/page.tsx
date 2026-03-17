@@ -88,13 +88,12 @@ export default function UserCompaniesPage() {
 
             const atTop = listRef.current ? listRef.current.scrollTop === 0 : true;
 
-            if (isFirstPage.current && atTop) {
-              setCompanies((prev) => {
-                const result = [company, ...prev];
+            setCompanies((prev) => {
+              const result = [company, ...prev];
 
-                return result;
-              });
-            } else {
+              return result;
+            });
+            if (!atTop) {
               setHasNewUpdates(true);
             }
           } catch {}
@@ -115,7 +114,6 @@ export default function UserCompaniesPage() {
   }, [id]);
 
   const handleReload = () => {
-    fetchCompanies();
     if (listRef.current) listRef.current.scrollTop = 0;
   };
 
