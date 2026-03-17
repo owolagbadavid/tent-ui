@@ -14,20 +14,18 @@ interface Image {
 
 interface PagedResponse {
   items: Image[];
-  nextOffset: number | null;
-  prevOffset: number | null;
+  nextCursor: number | null;
 }
 
 export default function UserImagesPage() {
   const { id } = useParams<{ id: string }>();
   const [images, setImages] = useState<Image[]>([]);
-  const [nextOffset, setNextOffset] = useState<number | null>(null);
-  const [prevOffset, setPrevOffset] = useState<number | null>(null);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageLoading, setImageLoading] = useState(false);
   const [error, setError] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
-  const currentOffset = useRef<number | null>(null);
+  const didFetch = useRef(false);
 
   const handleViewImage = async (image: Image) => {
     setImageLoading(true);
@@ -51,10 +49,8 @@ export default function UserImagesPage() {
         });
         if (offset != null) params.set("offset", String(offset));
         const res: PagedResponse = await apiFetch(`/users/${id}/images?${params}`);
-        setImages(res.items);
-        setNextOffset(res.nextOffset);
-        setPrevOffset(res.prevOffset);
-        currentOffset.current = offset ?? null;
+        setImages((c) => [...c, ...res.items]);
+        setNextCursor(res.nextCursor);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to load images");
       } finally {
@@ -65,8 +61,11 @@ export default function UserImagesPage() {
   );
 
   useEffect(() => {
+    if (didFetch.current) return;
+    didFetch.current = true;
+
     fetchImages();
-  }, [fetchImages]);
+  }, [id]);
 
   return (
     <div>
@@ -74,9 +73,7 @@ export default function UserImagesPage() {
       {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 
       <div ref={listRef} className="max-h-[70vh] overflow-auto">
-        {loading ? (
-          <p className="text-sm">Loading...</p>
-        ) : images.length === 0 ? (
+        {images.length === 0 ? (
           <p className="text-sm">No images found.</p>
         ) : (
           <table className="w-full text-sm border-collapse">
@@ -110,18 +107,11 @@ export default function UserImagesPage() {
 
       <div className="flex gap-4 mt-4">
         <button
-          disabled={prevOffset == null}
-          onClick={() => fetchImages(prevOffset)}
+          disabled={nextCursor == null || loading}
+          onClick={() => fetchImages(nextCursor)}
           className="text-sm underline disabled:opacity-30"
         >
-          Previous
-        </button>
-        <button
-          disabled={nextOffset == null}
-          onClick={() => fetchImages(nextOffset)}
-          className="text-sm underline disabled:opacity-30"
-        >
-          Next
+          {loading ? "Loading..." : "Load More"}
         </button>
       </div>
     </div>

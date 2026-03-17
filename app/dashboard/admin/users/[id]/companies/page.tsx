@@ -19,23 +19,22 @@ interface Company {
 
 interface PagedResponse {
   items: Company[];
-  nextOffset: number | null;
-  prevOffset: number | null;
+  nextCursor: number | null;
 }
 
 export default function UserCompaniesPage() {
   const { id } = useParams<{ id: string }>();
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [nextOffset, setNextOffset] = useState<number | null>(null);
-  const [prevOffset, setPrevOffset] = useState<number | null>(null);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
   const isFirstPage = useRef(true);
   const listRef = useRef<HTMLDivElement>(null);
+  const didFetch = useRef(false);
 
   const fetchCompanies = useCallback(
-    async (offset?: number | null) => {
+    async (cursor?: number | null) => {
       setLoading(true);
       setError("");
       try {
@@ -43,12 +42,11 @@ export default function UserCompaniesPage() {
           createdById: id,
           limit: "10",
         });
-        if (offset != null) params.set("offset", String(offset));
+        if (cursor != null) params.set("cursor", String(cursor));
         const res: PagedResponse = await apiFetch(`/companies?${params}`);
-        setCompanies(res.items);
-        setNextOffset(res.nextOffset);
-        setPrevOffset(res.prevOffset);
-        isFirstPage.current = !offset;
+        setCompanies((c) => [...c, ...res.items]);
+        setNextCursor(res.nextCursor);
+        isFirstPage.current = cursor == null;
         setHasNewUpdates(false);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to load companies");
@@ -60,8 +58,11 @@ export default function UserCompaniesPage() {
   );
 
   useEffect(() => {
+    if (didFetch.current) return;
+    didFetch.current = true;
+
     fetchCompanies();
-  }, [fetchCompanies]);
+  }, [id]);
 
   useEffect(() => {
     const apiUrl = process.env.NEXT_PUBLIC_API_URL;
@@ -89,12 +90,8 @@ export default function UserCompaniesPage() {
 
             if (isFirstPage.current && atTop) {
               setCompanies((prev) => {
-                const filtered = prev.filter((c) => c.id !== company.id);
-                const hasNextPage = filtered.length > 10;
-                const result = [company, ...filtered].slice(0, 10);
-                if (hasNextPage) {
-                  setNextOffset(10);
-                }
+                const result = [company, ...prev];
+
                 return result;
               });
             } else {
@@ -137,9 +134,7 @@ export default function UserCompaniesPage() {
       )}
 
       <div ref={listRef} className="max-h-[70vh] overflow-auto">
-        {loading ? (
-          <p className="text-sm">Loading...</p>
-        ) : companies.length === 0 ? (
+        {companies.length === 0 ? (
           <p className="text-sm">No companies found.</p>
         ) : (
           <table className="w-full text-sm border-collapse">
@@ -169,18 +164,11 @@ export default function UserCompaniesPage() {
 
       <div className="flex gap-4 mt-4">
         <button
-          disabled={prevOffset == null}
-          onClick={() => fetchCompanies(prevOffset)}
+          disabled={nextCursor == null || loading}
+          onClick={() => fetchCompanies(nextCursor)}
           className="text-sm underline disabled:opacity-30"
         >
-          Previous
-        </button>
-        <button
-          disabled={nextOffset == null}
-          onClick={() => fetchCompanies(nextOffset)}
-          className="text-sm underline disabled:opacity-30"
-        >
-          Next
+          {loading ? "Loading..." : "Load More"}
         </button>
       </div>
     </div>

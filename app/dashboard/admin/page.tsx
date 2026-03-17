@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { apiFetch } from "@/lib/api";
 import Link from "next/link";
 
@@ -13,19 +13,18 @@ interface UserItem {
 
 interface PagedResponse {
   items: UserItem[];
-  nextOffset: number | null;
-  prevOffset: number | null;
+  nextCursor: number | null;
 }
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<UserItem[]>([]);
-  const [nextOffset, setNextOffset] = useState<number | null>(null);
-  const [prevOffset, setPrevOffset] = useState<number | null>(null);
+  const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [isSubmittingUpload, setIsSubmittingUpload] = useState(false);
+  const didFetch = useRef(false);
 
   const fetchUsers = async (offset?: number | null) => {
     setLoading(true);
@@ -36,9 +35,8 @@ export default function AdminDashboard() {
       if (offset != null) params.set("offset", String(offset));
 
       const res: PagedResponse = await apiFetch(`/users?${params}`);
-      setUsers(res.items);
-      setNextOffset(res.nextOffset);
-      setPrevOffset(res.prevOffset);
+      setUsers((c) => [...c, ...res.items]);
+      setNextCursor(res.nextCursor);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load users");
     } finally {
@@ -47,6 +45,9 @@ export default function AdminDashboard() {
   };
 
   useEffect(() => {
+    if (didFetch.current) return;
+    didFetch.current = true;
+
     fetchUsers();
   }, []);
 
@@ -88,9 +89,7 @@ export default function AdminDashboard() {
       <h1 className="text-lg font-semibold mb-4">Workers</h1>
       {error && <p className="text-red-600 text-sm mb-3">{error}</p>}
 
-      {loading ? (
-        <p className="text-sm">Loading...</p>
-      ) : users.length === 0 ? (
+      {users.length === 0 ? (
         <p className="text-sm">No workers found.</p>
       ) : (
         <table className="w-full text-sm border-collapse">
@@ -125,18 +124,11 @@ export default function AdminDashboard() {
 
       <div className="flex gap-4 mt-4">
         <button
-          disabled={prevOffset == null}
-          onClick={() => fetchUsers(prevOffset)}
+          disabled={nextCursor == null}
+          onClick={() => fetchUsers(nextCursor)}
           className="text-sm underline disabled:opacity-30"
         >
-          Previous
-        </button>
-        <button
-          disabled={nextOffset == null}
-          onClick={() => fetchUsers(nextOffset)}
-          className="text-sm underline disabled:opacity-30"
-        >
-          Next
+          {loading ? "Loading..." : "Load More"}
         </button>
       </div>
 
