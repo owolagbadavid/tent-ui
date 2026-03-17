@@ -95,7 +95,7 @@ export default function UserCompaniesPage() {
                 const filtered = prev.filter((c) => c.id !== company.id);
                 const result = [company, ...filtered].slice(0, 10);
                 setNextCursor(
-                  result[result.length - 1]?.createdAt
+                  result.length >= 10 && result[result.length - 1]?.createdAt
                     ? new Date(result[result.length - 1].createdAt!).getTime()
                     : null,
                 );

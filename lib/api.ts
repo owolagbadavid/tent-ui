@@ -22,12 +22,12 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   }
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
   if (!res.ok) {
-    const text = await res.text();
+    const text = await res.json().then((data) => data.message || data.error);
     throw new Error(text || res.statusText);
   }
   const contentType = res.headers.get("content-type");
   if (contentType?.includes("application/json")) {
-    return res.json();
+    return res.json().then((response) => response.data);
   }
   return res;
 }
