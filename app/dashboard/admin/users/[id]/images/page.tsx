@@ -27,7 +27,7 @@ export default function UserImagesPage() {
   const [imageLoading, setImageLoading] = useState(false);
   const [error, setError] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
-  const currentCursor = useRef<number | null>(null);
+  const currentOffset = useRef<number | null>(null);
 
   const handleViewImage = async (image: Image) => {
     setImageLoading(true);
@@ -42,19 +42,19 @@ export default function UserImagesPage() {
   };
 
   const fetchImages = useCallback(
-    async (cursor?: number | null) => {
+    async (offset?: number | null) => {
       setLoading(true);
       setError("");
       try {
         const params = new URLSearchParams({
           limit: "10",
         });
-        if (cursor != null) params.set("cursor", String(cursor));
+        if (offset != null) params.set("offset", String(offset));
         const res: PagedResponse = await apiFetch(`/users/${id}/images?${params}`);
         setImages(res.items);
         setNextOffset(res.nextOffset);
         setPrevOffset(res.prevOffset);
-        currentCursor.current = cursor ?? null;
+        currentOffset.current = offset ?? null;
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to load images");
       } finally {

@@ -26,12 +26,14 @@ export default function AdminDashboard() {
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchUsers = async (cursor?: number | null) => {
+  const fetchUsers = async (offset?: number | null) => {
     setLoading(true);
     setError("");
+
     try {
       const params = new URLSearchParams({ role: "worker", limit: "10" });
-      if (cursor != null) params.set("cursor", String(cursor));
+      if (offset != null) params.set("offset", String(offset));
+
       const res: PagedResponse = await apiFetch(`/users?${params}`);
       setUsers(res.items);
       setNextOffset(res.nextOffset);
