@@ -13,30 +13,29 @@ interface UserItem {
 
 interface PagedResponse {
   items: UserItem[];
-  nextCursor: number | null;
-  prevCursor: number | null;
+  nextOffset: number | null;
+  prevOffset: number | null;
 }
 
 export default function AdminDashboard() {
   const [users, setUsers] = useState<UserItem[]>([]);
-  const [nextCursor, setNextCursor] = useState<number | null>(null);
-  const [prevCursor, setPrevCursor] = useState<number | null>(null);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [prevOffset, setPrevOffset] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [uploadingId, setUploadingId] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const fetchUsers = async (cursor?: number | null, direction?: "next" | "prev") => {
+  const fetchUsers = async (cursor?: number | null) => {
     setLoading(true);
     setError("");
     try {
       const params = new URLSearchParams({ role: "worker", limit: "10" });
       if (cursor != null) params.set("cursor", String(cursor));
-      if (direction) params.set("direction", direction);
       const res: PagedResponse = await apiFetch(`/users?${params}`);
       setUsers(res.items);
-      setNextCursor(res.nextCursor);
-      setPrevCursor(res.prevCursor);
+      setNextOffset(res.nextOffset);
+      setPrevOffset(res.prevOffset);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Failed to load users");
     } finally {
@@ -122,15 +121,15 @@ export default function AdminDashboard() {
 
       <div className="flex gap-4 mt-4">
         <button
-          disabled={prevCursor == null}
-          onClick={() => fetchUsers(prevCursor, "prev")}
+          disabled={prevOffset == null}
+          onClick={() => fetchUsers(prevOffset)}
           className="text-sm underline disabled:opacity-30"
         >
           Previous
         </button>
         <button
-          disabled={nextCursor == null}
-          onClick={() => fetchUsers(nextCursor, "next")}
+          disabled={nextOffset == null}
+          onClick={() => fetchUsers(nextOffset)}
           className="text-sm underline disabled:opacity-30"
         >
           Next

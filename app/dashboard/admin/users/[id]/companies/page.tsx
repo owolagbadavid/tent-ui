@@ -19,24 +19,23 @@ interface Company {
 
 interface PagedResponse {
   items: Company[];
-  nextCursor: number | null;
-  prevCursor: number | null;
+  nextOffset: number | null;
+  prevOffset: number | null;
 }
 
 export default function UserCompaniesPage() {
   const { id } = useParams<{ id: string }>();
   const [companies, setCompanies] = useState<Company[]>([]);
-  const [nextCursor, setNextCursor] = useState<number | null>(null);
-  const [prevCursor, setPrevCursor] = useState<number | null>(null);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [prevOffset, setPrevOffset] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [hasNewUpdates, setHasNewUpdates] = useState(false);
   const isFirstPage = useRef(true);
   const listRef = useRef<HTMLDivElement>(null);
-  const currentCursor = useRef<number | null>(null);
 
   const fetchCompanies = useCallback(
-    async (cursor?: number | null, direction?: "next" | "prev") => {
+    async (offset?: number | null) => {
       setLoading(true);
       setError("");
       try {
@@ -44,14 +43,12 @@ export default function UserCompaniesPage() {
           createdById: id,
           limit: "10",
         });
-        if (cursor != null) params.set("cursor", String(cursor));
-        if (direction) params.set("direction", direction);
+        if (offset != null) params.set("offset", String(offset));
         const res: PagedResponse = await apiFetch(`/companies?${params}`);
         setCompanies(res.items);
-        setNextCursor(res.nextCursor);
-        setPrevCursor(res.prevCursor);
-        currentCursor.current = cursor ?? null;
-        isFirstPage.current = cursor == null || (direction === "prev" && res.prevCursor == null);
+        setNextOffset(res.nextOffset);
+        setPrevOffset(res.prevOffset);
+        isFirstPage.current = !offset;
         setHasNewUpdates(false);
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to load companies");
@@ -94,11 +91,6 @@ export default function UserCompaniesPage() {
               setCompanies((prev) => {
                 const filtered = prev.filter((c) => c.id !== company.id);
                 const result = [company, ...filtered].slice(0, 10);
-                setNextCursor(
-                  result.length >= 10 && result[result.length - 1]?.createdAt
-                    ? new Date(result[result.length - 1].createdAt!).getTime()
-                    : null,
-                );
                 return result;
               });
             } else {
@@ -173,15 +165,15 @@ export default function UserCompaniesPage() {
 
       <div className="flex gap-4 mt-4">
         <button
-          disabled={prevCursor == null}
-          onClick={() => fetchCompanies(prevCursor, "prev")}
+          disabled={prevOffset == null}
+          onClick={() => fetchCompanies(prevOffset)}
           className="text-sm underline disabled:opacity-30"
         >
           Previous
         </button>
         <button
-          disabled={nextCursor == null}
-          onClick={() => fetchCompanies(nextCursor, "next")}
+          disabled={nextOffset == null}
+          onClick={() => fetchCompanies(nextOffset)}
           className="text-sm underline disabled:opacity-30"
         >
           Next

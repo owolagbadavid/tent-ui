@@ -14,15 +14,15 @@ interface Image {
 
 interface PagedResponse {
   items: Image[];
-  nextCursor: number | null;
-  prevCursor: number | null;
+  nextOffset: number | null;
+  prevOffset: number | null;
 }
 
 export default function UserImagesPage() {
   const { id } = useParams<{ id: string }>();
   const [images, setImages] = useState<Image[]>([]);
-  const [nextCursor, setNextCursor] = useState<number | null>(null);
-  const [prevCursor, setPrevCursor] = useState<number | null>(null);
+  const [nextOffset, setNextOffset] = useState<number | null>(null);
+  const [prevOffset, setPrevOffset] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [imageLoading, setImageLoading] = useState(false);
   const [error, setError] = useState("");
@@ -42,7 +42,7 @@ export default function UserImagesPage() {
   };
 
   const fetchImages = useCallback(
-    async (cursor?: number | null, direction?: "next" | "prev") => {
+    async (cursor?: number | null) => {
       setLoading(true);
       setError("");
       try {
@@ -50,11 +50,10 @@ export default function UserImagesPage() {
           limit: "10",
         });
         if (cursor != null) params.set("cursor", String(cursor));
-        if (direction) params.set("direction", direction);
         const res: PagedResponse = await apiFetch(`/users/${id}/images?${params}`);
         setImages(res.items);
-        setNextCursor(res.nextCursor);
-        setPrevCursor(res.prevCursor);
+        setNextOffset(res.nextOffset);
+        setPrevOffset(res.prevOffset);
         currentCursor.current = cursor ?? null;
       } catch (err: unknown) {
         setError(err instanceof Error ? err.message : "Failed to load images");
@@ -111,15 +110,15 @@ export default function UserImagesPage() {
 
       <div className="flex gap-4 mt-4">
         <button
-          disabled={prevCursor == null}
-          onClick={() => fetchImages(prevCursor, "prev")}
+          disabled={prevOffset == null}
+          onClick={() => fetchImages(prevOffset)}
           className="text-sm underline disabled:opacity-30"
         >
           Previous
         </button>
         <button
-          disabled={nextCursor == null}
-          onClick={() => fetchImages(nextCursor, "next")}
+          disabled={nextOffset == null}
+          onClick={() => fetchImages(nextOffset)}
           className="text-sm underline disabled:opacity-30"
         >
           Next
