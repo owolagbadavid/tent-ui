@@ -62,12 +62,6 @@ export default function LoginPage() {
         >
           {loading ? "Signing in..." : "Sign In"}
         </button>
-        <p className="text-sm mt-3 text-center">
-          No account?{" "}
-          <Link href="/auth/register" className="underline">
-            Register
-          </Link>
-        </p>
       </form>
     </div>
   );
