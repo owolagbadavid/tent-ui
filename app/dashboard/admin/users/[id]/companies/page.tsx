@@ -90,7 +90,11 @@ export default function UserCompaniesPage() {
             if (isFirstPage.current && atTop) {
               setCompanies((prev) => {
                 const filtered = prev.filter((c) => c.id !== company.id);
+                const hasNextPage = filtered.length > 10;
                 const result = [company, ...filtered].slice(0, 10);
+                if (hasNextPage) {
+                  setNextOffset(10);
+                }
                 return result;
               });
             } else {
