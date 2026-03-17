@@ -31,7 +31,7 @@ export default function UserImagesPage() {
 
   const handleViewImage = async (image: Image) => {
     setImageLoading(true);
-    const res = await apiFetch(`/users/${id}/images/${image.id}`).finally(() =>
+    const res = await apiFetch<Image>(`/users/${id}/images/${image.id}`).finally(() =>
       setImageLoading(false),
     );
 
@@ -99,7 +99,7 @@ export default function UserImagesPage() {
                       className="underline disabled:cursor-not-allowed cursor-pointer!"
                       onClick={() => handleViewImage(c)}
                     >
-                      View
+                      {imageLoading ? "Loading..." : "View"}
                     </button>
                   </td>
                 </tr>

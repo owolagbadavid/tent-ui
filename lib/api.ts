@@ -7,12 +7,16 @@ async function getToken(): Promise<string | null> {
   if (!user) return null;
   return user.getIdToken();
 }
-
-export async function apiFetch(path: string, options: RequestInit = {}) {
+export async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {}
+): Promise<T> {
   const token = await getToken();
+
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
   };
+
   if (token) {
     headers["Authorization"] = `Bearer ${token}`;
   }
@@ -20,14 +24,20 @@ export async function apiFetch(path: string, options: RequestInit = {}) {
   if (!(options.body instanceof FormData) && !headers["Content-Type"]) {
     headers["Content-Type"] = "application/json";
   }
+
   const res = await fetch(`${API_URL}${path}`, { ...options, headers });
+
   if (!res.ok) {
     const text = await res.json().then((data) => data.message || data.error);
     throw new Error(text || res.statusText);
   }
+
   const contentType = res.headers.get("content-type");
+
   if (contentType?.includes("application/json")) {
-    return res.json().then((response) => response.data);
+    const response = await res.json();
+    return response?.data;
   }
-  return res;
+
+  return res as unknown as T;
 }
