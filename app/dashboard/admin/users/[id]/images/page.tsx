@@ -22,15 +22,15 @@ export default function UserImagesPage() {
   const [images, setImages] = useState<Image[]>([]);
   const [nextCursor, setNextCursor] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
-  const [imageLoading, setImageLoading] = useState(false);
+  const [loadingImageId, setLoadingImageId] = useState<number | null>(null);
   const [error, setError] = useState("");
   const listRef = useRef<HTMLDivElement>(null);
   const didFetch = useRef(false);
 
   const handleViewImage = async (image: Image) => {
-    setImageLoading(true);
+    setLoadingImageId(image.id);
     const res = await apiFetch<Image>(`/users/${id}/images/${image.id}`).finally(() =>
-      setImageLoading(false),
+      setLoadingImageId(null),
     );
 
     const a = document.createElement("a");
@@ -91,11 +91,11 @@ export default function UserImagesPage() {
                   <td className="py-2 pr-4">{c.userId}</td>
                   <td className="py-2">
                     <button
-                      disabled={imageLoading}
+                      disabled={loadingImageId === c.id}
                       className="underline disabled:cursor-not-allowed cursor-pointer!"
                       onClick={() => handleViewImage(c)}
                     >
-                      {imageLoading ? "Loading..." : "View"}
+                      {loadingImageId === c.id ? "Loading..." : "View"}
                     </button>
                   </td>
                 </tr>
