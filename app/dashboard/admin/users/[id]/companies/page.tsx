@@ -115,7 +115,11 @@ export default function UserCompaniesPage() {
 
   const handleReload = () => {
     setHasNewUpdates(false);
-    if (listRef.current) listRef.current.scrollTop = 0;
+    if (listRef.current)
+      listRef.current?.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
   };
 
   return (
