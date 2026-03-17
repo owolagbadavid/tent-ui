@@ -114,6 +114,7 @@ export default function UserCompaniesPage() {
   }, [id]);
 
   const handleReload = () => {
+    setHasNewUpdates(false);
     if (listRef.current) listRef.current.scrollTop = 0;
   };
 
@@ -127,7 +128,7 @@ export default function UserCompaniesPage() {
           onClick={handleReload}
           className="mb-3 px-3 py-1 bg-black text-white text-sm rounded"
         >
-          New updates available — click to reload
+          New inputs available
         </button>
       )}
 
